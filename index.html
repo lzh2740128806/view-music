@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta name="viewport" content="width=device-width">
+	<meta charset="UTF-8">
+	<title>webaudioapi</title>
+	<style>
+		html, body{
+			margin: 0;
+			width: 100%;
+			height: 100%;
+			background: #DE0;
+		}
+		.wrap{
+			display: flex;
+			justify-content: flex-start;
+			align-items: center;
+			width: 100%;
+			height: 100%;
+			font-size: 0;
+		}
+		.wrap span{
+			display: block;
+			width: 1px;
+			height: 0;
+			background: #000;
+			vertical-align: top;
+		}
+		.load{
+			position: fixed;
+			left: 0;
+			top: 0;
+			width: 100%;
+			height: 100%;
+			background: rgba(0,0,0,.6);
+			text-align: center;
+		}
+		.load:before{
+			content: '';
+			display: inline-block;
+			width: 0;
+			height: 100%;
+			vertical-align: middle;
+		}
+		.load span{
+			display: inline-block;
+			vertical-align: middle;
+			font-size: 25px;
+			color: #eee;
+		}
+	</style>
+</head>
+<body>
+<div class="load">
+	<span>loading</span>
+</div>
+	<div class="wrap">
+		<script>
+			var ww = window.innerWidth>=1024? 1024 : window.innerWidth;
+			for(var j=0; j<ww; j++){
+			    document.write('<span></span>');
+			}
+		</script>
+	</div>
+
+	<script>
+        window.AudioContext = window.AudioContext||window.webkitAudioContext;
+        var audiobuffer;
+        var source;
+        var analyser;
+        var context = new AudioContext();
+        var spans = document.querySelectorAll('.wrap span');
+
+        //对音频文件的异步解析
+        var request = new XMLHttpRequest();
+        request.open('GET', 'cd.flac', true);
+        request.responseType= 'arraybuffer';
+        request.onload = function(){
+            context.decodeAudioData(request.response,function(buffer){
+                audiobuffer = buffer;
+                run();
+                document.querySelector('.load').remove();
+            },function (error) {
+			});
+        };
+        request.send();
+
+
+        function run() {
+            source = context.createBufferSource();//音源
+            source.buffer = audiobuffer;//音频数据
+            source.connect(context.destination);// 连接到输出源
+            source.loop = true;//开启循环播放
+            source.start(0);//开始播放
+
+
+            analyser = context.createAnalyser();//分析器
+            source.connect(analyser);//将音源与分析器连接
+            analyser.connect(context.destination);//将分析器与输出源连接
+            draw();
+        }
+
+        function draw() {
+            var array = new Uint8Array(analyser.frequencyBinCount);
+            var byte = analyser.getByteFrequencyData(array);
+			spans.forEach(function (el, i) {
+			   el.style.height = array[i] * 2 + 'px';
+			});
+            requestAnimationFrame(draw);
+        }
+	</script>
+</body>
+</html>
