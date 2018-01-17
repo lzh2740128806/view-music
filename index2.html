@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta name="viewport" content="width=device-width">
+	<meta charset="UTF-8">
+	<title>webaudioapi</title>
+	<style>
+		html, body{
+			margin: 0;
+			width: 100%;
+			height: 100%;
+			background: #DE0;
+		}
+
+		.load{
+			position: fixed;
+			left: 0;
+			top: 0;
+			right: 0;
+			bottom: 0;
+			z-index: 999;
+			margin: auto;
+			width: 100%;
+			height: 100%;
+			background: rgba(0,0,0,.7);
+			text-align: center;
+			color: #fff;
+			font-size: 35px;
+			font-weight: bolder;
+		}
+		.load:before{
+			content: '';
+			width: 0;
+			height: 100%;
+		}
+		.load:before, .load span{
+			display: inline-block;
+			vertical-align: middle;
+		}
+
+		.huan{
+			position: fixed;
+			left: 0;
+			top: 0;
+			right: 0;
+			bottom: 0;
+			margin: auto;
+			width: 100px;
+			height: 100px;
+			background: #333;
+			border-radius: 50%;
+			box-shadow: 0 0 5px #333;
+		}
+		.huan:before{
+			position: absolute;
+			left: 0;
+			top: 0;
+			right: 0;
+			bottom: 0;
+			margin: auto;
+			content: '';
+			width: 60%;
+			height: 60%;
+			border-radius: 50%;
+			background: #000;
+			box-shadow: 0 0 15px #999 inset, 0 0 15px #999;
+		}
+		.huan:after{
+			position: absolute;
+			left: 0;
+			top: 0;
+			right: 0;
+			bottom: 0;
+			margin: auto;
+			content: '';
+			width: 30%;
+			height: 30%;
+			border-radius: 50%;
+			background: #000;
+			box-shadow: 0 0 15px #999 inset, 0 0 15px #999;
+		}
+	</style>
+</head>
+<body>
+<div class="load">
+	<span>loading...</span>
+</div>
+
+	<div class="huan"></div>
+
+	<script>
+        window.AudioContext = window.AudioContext||window.webkitAudioContext;
+        var audiobuffer;
+        var source;
+        var analyser;
+        var context = new AudioContext();
+
+        var huan;
+
+        //对音频文件的异步解析
+        var request = new XMLHttpRequest();
+        request.open('GET', 'summer.mp3', true);
+        request.responseType= 'arraybuffer';
+        request.onload = function(){
+            context.decodeAudioData(request.response,function(buffer){
+                audiobuffer = buffer;
+                run();
+                document.querySelector('.load').remove();
+            },function (error) {
+			});
+        };
+        request.send();
+
+
+        function run() {
+            source = context.createBufferSource();//音源
+            source.buffer = audiobuffer;//音频数据
+            source.connect(context.destination);// 连接到输出源
+            source.loop = true;//开启循环播放
+            source.start(0);//开始播放
+
+
+            analyser = context.createAnalyser();//分析器
+            source.connect(analyser);//将音源与分析器连接
+            analyser.connect(context.destination);//将分析器与输出源连接
+            draw();
+        }
+
+        function draw() {
+            var array = new Uint8Array(analyser.frequencyBinCount);
+            analyser.getByteFrequencyData(array);
+            huan = 0;
+			array.forEach(function (el, i) {
+			   huan += el;
+			});
+			huan /= 1024/5;
+			document.querySelector('.huan').style.width = huan + 'px';
+			document.querySelector('.huan').style.height = huan + 'px';
+            requestAnimationFrame(draw);
+        }
+	</script>
+</body>
+</html>
