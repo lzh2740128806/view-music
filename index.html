@@ -73,7 +73,7 @@
 
         //对音频文件的异步解析
         var request = new XMLHttpRequest();
-        request.open('GET', 'cd.mp3', true);
+        request.open('GET', 'summer.mp3', true);
         request.responseType= 'arraybuffer';
         request.onload = function(){
             context.decodeAudioData(request.response,function(buffer){
